@@ -1,7 +1,7 @@
 ################# CSC258 Assembly Final Project ###################
 # This file contains our implementation of Dr Mario.
 #
-# Student 1: Name, Student Number
+# Student 1: Tyler Steptoe, 1009197441
 # Student 2: Name, Student Number (if applicable)
 #
 # We assert that the code submitted here is entirely our own 
