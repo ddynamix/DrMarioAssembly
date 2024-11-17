@@ -4,15 +4,14 @@ grid_1:     .space      512             # allocate space for the other grid
 newline:    .asciiz     "\n"            # newline character
 
 .text
-.globl initialize_grid
-initialize_grid:
+.globl initialize_grid:
     la $t0, grid_0                          # load address of grid_0 into $t0
     la $t1, grid_1                          # load address of grid_1 into $t1
+    li $t2, 8                               # 8 columns
     #move $s0, $a0                          # load chosen maximum row level into $s0
     li $s0, 10                               # temporary for testing purpsoes
     #move $s1, $a1                          # load chosen amount of viruses into $s1
     li $s1, 10                              # temporary for testing purposes
-    li $t2, 8                               # 8 columns
     li $t8, 0                               # row index (i)
     traverse_rows:
         li $t9, 0                               # column index (j)
@@ -45,6 +44,7 @@ initialize_grid:
     addi $t8, $t8, 1                        # increment row index
     blt $t8, 16, traverse_rows              # repeat for all 16 rows
     
+
 spawn_viruses:
     li $t3, 15             # maximum value, bottom index of grid
     sub $t3, $t3, $s0      # dalculate range: 15 - max_row
@@ -100,34 +100,10 @@ print_grid:
     addi $t8, $t8, 1                        # increment row index
     blt $t8, 16, traverse_rows1             # repeat for all 16 rows
     
-la $v0, grid_0                          # load address of grid_0 into $v0
-la $v1, grid_1                          # load address of grid_1 into $v1
-jr $ra                                  # return to main game loop
+jr $ra      # return to main game loop
     
 
-.globl calculate_next_grid
-calculate_next_grid:
-    move $t0, $v0                   # $t0 will have the address of the grid to be displayed
-    move $t1, $v1                   # $t1 will have the address of the grid that is currently displayed.
-    li $t2, 8                               # 8 columns
     
-    li $t8, 0                               # row index (i)
-    traverse_rows2:
-        li $t9, 0                               # column index (j)
-        traverse_column2:
-            mul $t3, $t8, $t2                       # $t3 = i * cols
-            add $t3, $t3, $t9                       # $t3 = i * cols + j
-            mul $t3, $t3, 4                         # $t3 = (i * cols + j) * Element Size
-            add $t4, $t0, $t3                       # $t4 (address of to be displayed grid) = base + offset
-            add $t5, $t1, $t3                       # $t5 (address of currently displayed grid) = base + offset
-            
-            #implement logic here
+    
 
-                         
-        addi $t9, $t9, 1                        # increment column index
-        blt $t9, $t2, traverse_column2          # return to top of column loop, or if $t9 (counter) reaches 
-                                                    # number of cols, break out of loop
-    addi $t8, $t8, 1                        # increment row index
-    blt $t8, 16, traverse_rows2             # repeat for all 16 rows
-    
     
