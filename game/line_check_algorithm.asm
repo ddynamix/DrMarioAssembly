@@ -1,9 +1,9 @@
 .data
-    line_cleared:   .half       0       # this will be set to one if it succsessfully clears a line.
+    line_cleared:   .half       0       # this will be set to one if it successfully clears a line.
     seconds_passed: .half       0       # this will keep track of the seconds passed since last line cleared
 
 .text
-jr $t0              # this will make sure the code doen't run when loaded in
+jr $t0              # this will make sure the code doesn't run when loaded in
 
 # Arguments (from top of stack to bottom):
 # - Address of grid
@@ -14,7 +14,8 @@ jr $t0              # this will make sure the code doen't run when loaded in
 # - Num of viruses
 # - Viruses cleared
 # Returns:
-# #v0: line cleared status (0 - no lines cleared, 1 - lines cleared)
+# $v0: line cleared status (0 = no lines cleared, 1 = lines cleared)
+# $v1: capsule finished falling status (0 = not finished falling, 1 = finished falling)
 calculate_lines:
     # pop all arguments
     lw $s0, 0($sp)              # $s0 = address of grid
@@ -52,7 +53,7 @@ calculate_lines:
             lh $t1, seconds_passed
             addi $t1, $t1, 1
             sh $t1, seconds_passed
-        not_one_second:                 # continue
+        not_one_second:                     # continue
     
         lh $t1, seconds_passed              # load number of seconds passed into $t1
         blt $t1, 4, return_from_line_check  # if the counter is not yet 4, skip the rest of the check line function
@@ -76,7 +77,7 @@ calculate_lines:
         rline_check_traverse_column:
             beq $t3, $t0, rline_check_traverse_column_end    # end loop if counter reaches 8 cells
             
-            mul $t4, $t2, $t0       # y * cols
+            mul $t4, $t2, 8         # y * cols
             add $t4, $t4, $t3       # y * cols + x
             mul $t4, $t4, 4         # (y * cols + x) * Element Size
             add $t4, $s0, $t4       # address ($t4) = base ($s0) + offset
@@ -86,8 +87,6 @@ calculate_lines:
                 # else, the element is 0
                 j rgo_to_next_cell_in_row
             rline_check_rows_element_is_not_zero:
-
-                
                 addi $t5, $t5, 1            # increment non-zero counter by 1
                 
                 blt $t5, 4, rgo_to_next_cell_in_row # if there are less than 4 non-zero cells, the row is not valid YET
@@ -132,13 +131,13 @@ calculate_lines:
             cline_check_column_element_is_not_zero:
                 addi $t5, $t5, 1            # increment non-zero counter by 1
                 
-                blt $t5, 4, cgo_to_next_cell_in_column # if there are less than 4 non-zero cells, the column is not valid YET
+                blt $t5, 4, cgo_to_next_cell_in_column      # if there are less than 4 non-zero cells, the column is not valid YET
                     # else, the column is valid
-                    move $a0, $t2           # load the current row number into argument $a0
+                    move $a0, $t2                           # load the current column number into argument $a0
                     jal push_all_t_registers_to_stack
-                    jal valid_column           # call function valid_column
+                    jal valid_column                        # call function valid_column
                     jal pop_all_t_registers_from_stack
-                    j cline_check_traverse_row_end    # can skip directly to next column once it returns from valid row check
+                    j cline_check_traverse_row_end          # can skip directly to next column once it returns from valid row check
                 
             cgo_to_next_cell_in_column:
             addi $t3, $t3, 1                # increment row counter by 1
@@ -150,11 +149,19 @@ calculate_lines:
     # Here, it has finished checking through all the columns and rows.
     
     return_from_line_check:
-    
-    lw $v0, line_cleared    # load return address $v0 with line_cleared status (0 = a line wasn't cleared on this check, 1 = a line was cleared)
-    lw $ra, 0($sp)
-    addi $sp, $sp, 4        # pop $ra from stack
-    jr $ra                  # top-level main function.
+        lw $ra, 0($sp)
+        addi $sp, $sp, 4        # pop $ra from stack
+        
+        lw $t0, line_cleared                # load return address $v0 with line_cleared status (0 = a line wasn't cleared on this check, 1 = a line was cleared)
+        beq $t0, $zero line_not_cleared     # if a line was not cleared, skip next function
+            # else, a line was cleared this check-through
+            li $v0, 0               # load $v0 with 0 to indicate a new capsule should not spawn
+            li $v1, 1               # load $v1 with 1 to indicate the capsule has still not finished falling and this function should be called
+            jr $ra                  # top-level main function.
+        line_not_cleared:
+            li $v0, 1               # load $v0 with 1 to indicate a new capsule should spawn
+            li $v1, 0               # load $v1 with 0 to indicate a new capsule has finished falling
+            jr $ra                  # top-level main function.
         
         
 ########################################################
@@ -174,6 +181,11 @@ valid_row:
     move $t2, $a0                           # $t2 = current row to check
     li $t0, 8                               # $t0 = number of cells in a row
     
+    li $v0, 1
+    li $a0, 8
+    syscall
+    
+    
     # This loop will check the row 3 times, one for each colour.
     li $t1, 1               # $t8 = loop counter. 1 = red, 2 = green, 3 = blue
     valid_row_loop_colours:
@@ -185,30 +197,33 @@ valid_row:
         valid_row_traverse_row:
             beq $t3, $t0, valid_row_traverse_row_end    # If reached end of row, end loop
             
-            mul $t4, $t2, $t0       # y * cols
+            mul $t4, $t2, 8         # y * cols
             add $t4, $t4, $t3       # y * cols + x
             mul $t4, $t4, 4         # (y * cols + x) * Element Size
             add $t4, $s0, $t4       # address ($t4) = base of grid ($s0) + offset
-            lw $t7, 0($t4)          # $t4 = element
+            lw $t7, 0($t4)          # $t7 = element
             
             addi $t3, $t3, 1                        # increment current cell place in row counter by 1
             
-            bne $t7, $t1, not_correct_colour_row    # branch if not correct colour
-            addi $t6, $t7, 3                        # add 3 to the element to check for it's corresponding virus colour
-            bne $t6, $t1, not_correct_colour_row     # branch if not correct colour
-            # here, we know that the cell is the colour we are looking for.
-            addi $t5, $t5, 1                        # increment colour in a row counter by 1
-            j valid_row_traverse_row                # jump back to top of loop
+            addi $t6, $t1, 3                        # add 3 to the checker to check for it's corresponding virus colour
+            beq $t7, $t1, correct_colour_row    # branch if not correct colour
+            beq $t6, $t1, correct_colour_row     # branch if not correct colour
+            j not_correct_colour_row               # jump back to top of loop
             
+            correct_colour_row:
+                # here, we know that the cell is the colour we are looking for.
+                addi $t5, $t5, 1                # increment colour in a column counter by 1
+                j valid_row_traverse_row        # jump back to top of loop
+
             not_correct_colour_row:             # if the cell is not the correct colour
-                bgt $t5, 4, call_clear_line_row # if the cell in a row counter is >= 4, call the clear line function
+                bgt $t5, 3, call_clear_line_row # if the cell in a row counter is >= 4, call the clear line function
                 li $t5, 0                       # else, reset cells in a row counter
                 j valid_row_traverse_row        # jump back to top of loop
 
             call_clear_line_row:                # else, jump and link to clear_line_row
                 move $a0, $t5                   # load the number of colours found in a row into $a0
-                move $a2, $t3                   # load current column position + 1 into $a2
-                move $a3, $t2                   # load index of current row into $a3
+                move $a2, $t3                   # load current row position + 1 into $a2 (x)
+                move $a3, $t2                   # load index of current row into $a3 (y)
                 jal clear_line_row      
                 li $t5, 0                       # reset colour in a row counter to 0
             
@@ -217,8 +232,8 @@ valid_row:
         
         blt $t5, 4, row_clear_line_skip # if the counter was less than 4 when the row was finished
             move $a0, $t5                   # load the number of colours found in a row into $a0
-            move $a2, $t3                   # load current column position + 1 into $a2
-            move $a3, $t2                   # load index of current row into $a3
+            move $a2, $t3                   # load current row position + 1 into $a2 (x)
+            move $a3, $t2                   # load index of current row into $a3 (y)
             jal clear_line_row              # jump and link to clear_line_row
             li $t5, 0                       # reset colour in a row counter to 0
         row_clear_line_skip:            # skip calling the function
@@ -236,24 +251,23 @@ valid_row:
 # This function will be called when we have successfully deteced a row of >= 4 of the same colour.
 # It will go through those cells from right to left and call another function to clear them.
 clear_line_row:
-    move $t5, $a0   # $t5 = number of colours in a row
-    move $t3, $a2   # $t3 = cell position in row (x)
-    move $t2, $a3   # $t2 = current row (y)
-    
+    move $t5, $a0       # $t5 = number of colours in a row
+    move $t3, $a2       # $t3 = cell position in row (x)
+    addi $t3, $t3, -2   # subtract 2 from x pos to get accurate index
+    move $t2, $a3       # $t2 = current row (y)
+
     addi $sp, $sp, -4
     sw $ra, 0($sp)      # push $ra to stack
     jal push_all_t_registers_to_stack
     
-    addi $t3, $t3, -1           # subtract one from x pos to get accurate index
-    
     clear_line_row_loop:
         beq $t5, $zero, clear_line_row_loop_end     # end loop when done with clearing row
         
-        move $a0, $t3       # $a0 will have x index of cell
-        move $a1, $t2       # $a1 will have y index of cell
+        move $a0, $t3               # $a0 will have x index of cell
+        move $a1, $t2               # $a1 will have y index of cell
         
         jal push_all_t_registers_to_stack
-        jal clear_cell      # call the function to clear the cell 
+        jal clear_cell              # call the function to clear the cell 
         jal pop_all_t_registers_from_stack
         
         addi $t5, $t5, -1           # increment counter by -1
@@ -301,32 +315,36 @@ valid_column:
             
             addi $t3, $t3, 1                        # increment current cell place in column counter by 1
             
-            bne $t7, $t1, not_correct_colour_column # branch if not correct colour
-            addi $t6, $t7, 3                        # add 3 to the element to check for it's corresponding virus colour
-            bne $t6, $t1, not_correct_colour_column # branch if not correct colour
-            # here, we know that the cell is the colour we are looking for.
-            addi $t5, $t5, 1                        # increment colour in a column counter by 1
-            li $v0, 1
-            move $a0, $t5
-            syscall
-            j valid_column_traverse_column          # jump back to top of loop
+            addi $t6, $t1, 3                        # add 3 to the checker to check for it's corresponding virus colour
+            beq $t7, $t1, correct_colour_column     # branch if not correct colour
+            beq $t7, $t6, correct_colour_column     # branch if not correct colour
+            j not_correct_colour_column
             
+            correct_colour_column:
+                # here, we know that the cell is the colour we are looking for.
+                addi $t5, $t5, 1                    # increment colour in a column counter by 1
+                j valid_column_traverse_column      # jump back to top of loop
+
             not_correct_colour_column:              # if the cell is not the correct colour
-                bgt $t5, 4, call_clear_line_column  # if the cell in a row counter is >= 4, call the clear line function
+                bgt $t5, 3, call_clear_line_column  # if the cell in a row counter is >= 4, call the clear line function
                 li $t5, 0                           # else, reset cells in a row counter
                 j valid_column_traverse_column      # jump back to top of loop
 
-            call_clear_line_column:                # else, jump and link to clear_line_row
-                move $a0, $t5                   # load the number of colours found in a row into $a0
-                move $a2, $t3                   # load current column position + 1 into $a2
-                move $a3, $t2                   # load index of current row into $a3
+            call_clear_line_column:                 # else, jump and link to clear_line_row
+                move $a0, $t5                       # load the number of colours found in a row into $a0
+                move $a2, $t3                       # load current column position + 1 into $a2
+                move $a3, $t2                       # load index of current row into $a3
                 jal clear_line_column      
-                li $t5, 0                       # reset colour in a row counter to 0
+                li $t5, 0                           # reset colour in a row counter to 0
             
-            j valid_column_traverse_column      # jump back to top of loop
+            j valid_column_traverse_column          # jump back to top of loop
         valid_column_traverse_column_end:
         
         blt $t5, 4, column_clear_line_skip  # if the counter was less than 4 when the row was finished
+            # here, we know that a row of >= 4 was found
+            
+            addi $t3, $t3, 1                # add one to y value for offset purposes
+            
             move $a0, $t5                   # load the number of colours found in a column into $a0
             move $a2, $t3                   # load current row index + 1 into $a2
             move $a3, $t2                   # load index of current column into $a3
@@ -337,6 +355,7 @@ valid_column:
         addi $t1, $t1, 1            # increment colour counter by 1
         j valid_column_loop_colours # jump back to top of colour loop
     valid_column_loop_colours_end:
+        bgt $t5, 3, call_clear_line_column  # if the cell in a row counter is >= 4, call the clear line function
     
     jal pop_all_t_registers_from_stack
     lw $ra, 0($sp)
@@ -345,17 +364,16 @@ valid_column:
 
 
 # This function will be called when we have successfully deteced a row of >= 4 cells of the same colour.
-# It will go through those cells from right to left and call another function to clear them.
+# It will go through those cells from bottom to top and call another function to clear them.
 clear_line_column:
     move $t5, $a0   # $t5 = number of colours in a row
     move $t3, $a2   # $t3 = cell position in column (y)
+    addi $t3, $t3, -2   # subtract 2 from y pos to get accurate index
     move $t2, $a3   # $t2 = current column (x)
     
     addi $sp, $sp, -4
     sw $ra, 0($sp)      # push $ra to stack
     jal push_all_t_registers_to_stack
-    
-    addi $t3, $t3, -1   # subtract one from y pos to get accurate index
     
     clear_line_column_loop:
         beq $t5, $zero, clear_line_column_loop_end     # end loop when done with clearing column
@@ -367,8 +385,8 @@ clear_line_column:
         jal clear_cell      # call the function to clear the cell 
         jal pop_all_t_registers_from_stack
         
-        addi $t5, $t5, -1           # increment counter by -1
-        addi $t3, $t3, -1           # increment y index by -1
+        addi $t5, $t5, -1             # increment counter by -1
+        addi $t3, $t3, -1               # increment y index by -1
         j clear_line_column_loop       # jump back to top of loop
     clear_line_column_loop_end:
     li $t6, 1               # load $t6 with one because we cleared a line
@@ -395,80 +413,84 @@ clear_cell:
     # $s5 = total number of viruses
     # $s6 = number of viruses cleared
     
+    # [debugging] confirmed x and y index are correct here
+    
     # First, check capsule list
     li $t0, 0           # counter to go through capsules
     clear_cell_capsule_loop:
-        bgt $t0, $s3, clear_cell_capsule_loop_end   # end the loop when we've ran through all the capsules
+        beq $t0, $s3, clear_cell_capsule_loop_end   # end the loop when we've ran through all the capsules
         
-        mult $t1, $t0, 8    # $t1 = capsule number * 8 because each capsule is 8 bytes
-        add $t1, $s2, $t1   # $t1 = address of relevant capsule
-        
+        mult $t6, $t0, 8                        # multiply counter by 8 since each capsule is 8 bytes
+        add $t1, $s2, $t6                       # add offset to address of capsules into $t1
+
         # compare to base halves
-        lb $t2, 0($t1)      # load base half colour into $t2
+        lb $t2, 0($t1)                          # load base half colour into $t2
         beq $t2, $zero, skip_base_half_check    # if the colour is already 0, skip this half
-        lb $t2, 3($t1)      # load base half x into $t2
+        lb $t2, 3($t1)                          # load base half x into $t2
         bne $t2, $a0, skip_base_half_check      # if the x index doesn't match, skip this half
-        lb $t2, 2($t1)      # load base half y into $t2
+        lb $t2, 2($t1)                          # load base half y into $t2
         bne $t2, $a1, skip_base_half_check      # if the y index doesn't match, skip this half
         # here, we know the base half matches the x and y
-        lb $t2, 6($t1)      # load the orientation status into $t2
-        bne $t2, 2, half_is_not_singular    # if the status is not 2, it's not singular
-        # here, we know the half is singular
-        sb $zero, 0($t1)    # set the base half's colour to 0
-        jr $ra              # we found the relevant capsule, so return
-        half_is_not_singular:
-        lb $t2, 1($t1)      # load the second half's colour into $t2
-        sb $t2, 0($t1)      # save the second half's colour into base half's colour
-        sb $zero, 1($t1)    # save the second half's colour to 0
-        lb $t2, 5($t1)      # load x coord of second half into $t2
-        sb $t2, 3($t1)      # save x coord of second half into x coord of base half
-        lb $t2, 4($t1)      # load y coord of second half into $t2
-        sb $t2, 2($t1)      # save y coord of second half into y coord of base half
-        li $t2, 2           # load $t2 with status for singular capsule
-        sb $t2, 6($t1)      # set orientation of capsule to single
-        jr $ra              # we found the relevant capsule, so return
+            lb $t2, 6($t1)      # load the orientation status into $t2
+            bne $t2, 2, half_is_not_singular    # if the status is not 2, it's not singular
+                # here, we know the half is singular
+                sb $zero, 0($t1)    # set the base half's colour to 0
+                jr $ra              # we found and modifiedthe relevant capsule, so return
+        
+            half_is_not_singular:
+                lb $t2, 1($t1)      # load the second half's colour into $t2
+                sb $t2, 0($t1)      # save the second half's colour into base half's colour
+                sb $zero, 1($t1)    # save the second half's colour to 0
+                lb $t2, 5($t1)      # load x coord of second half into $t2
+                sb $t2, 3($t1)      # save x coord of second half into x coord of base half
+                lb $t2, 4($t1)      # load y coord of second half into $t2
+                sb $t2, 2($t1)      # save y coord of second half into y coord of base half
+                li $t2, 2           # load $t2 with status for singular capsule
+                sb $t2, 6($t1)      # set orientation of capsule to single
+                jr $ra              # we found the relevant capsule, so return
         
         skip_base_half_check:
-        # compare to secondary halves
-        lb $t2, 1($t1)      # load secondary half colour into $t2
-        beq $t2, $zero, skip_secondary_half_check    # if the colour is already 0, skip this half
-        lb $t2, 5($t1)      # load secondary half x into $t2
-        bne $t2, $a0, skip_secondary_half_check      # if the x index doesn't match, skip this half
-        lb $t2, 4($t1)      # load secondary half y into $t2
-        bne $t2, $a1, skip_secondary_half_check      # if the y index doesn't match, skip this half
-        # here, we know the secondary half matches the x and y
-        sb $zero, 1($t1)    # save secondary half colour as 0
-        li $t2, 2           # load $t2 with status of singular capsule
-        sb $t2, 6($t1)      # set orientation of capsule to single 
-        jr $ra              # we found the relevant capsule, so return
+            # compare to secondary halves
+            lb $t2, 1($t1)      # load secondary half colour into $t2
+            beq $t2, $zero, skip_secondary_half_check    # if the colour is already 0, skip this half
+            lb $t2, 5($t1)      # load secondary half x into $t2
+            bne $t2, $a0, skip_secondary_half_check      # if the x index doesn't match, skip this half
+            lb $t2, 4($t1)      # load secondary half y into $t2
+            bne $t2, $a1, skip_secondary_half_check      # if the y index doesn't match, skip this half
+            # here, we know the secondary half matches the x and y
+                sb $zero, 1($t1)    # save secondary half colour as 0
+                li $t2, 2           # load $t2 with status of singular capsule
+                sb $t2, 6($t1)      # set orientation of capsule to single 
+                jr $ra              # we found the relevant capsule, so return
         
         skip_secondary_half_check:
         addi $t0, $t0, 1    # increment counter by 1
         j clear_cell_capsule_loop   # jump back to top of loop
     clear_cell_capsule_loop_end:
     
-    # If the capsule wasn't found, check the virus list
+    # If the capsule wasn't found, check the virus list  
     li $t0, 0           # counter to go through viruses
     clear_cell_virus_loop:
-        bgt $t0, $s5, clear_cell_virus_loop_end     # end the loop once we've gone through all the viruses
+        beq $t0, $s5, clear_cell_virus_loop_end     # end the loop once we've gone through all the viruses
         
         mult $t1, $t0, 8    # $t1 = virus number * 8 because each virus is 8 bytes
         add $t1, $s4, $t1   # $t1 = address of relevant virus
         
         lb $t2, 0($t1)      # load $t2 with colour of virus
-        beq $t2, $zero, skip_virus_check    # if the colour is already 0, skip this virus
-        lb $t2, 1($t1)      # load $t2 with x index of virus
-        beq $t2, $a0, skip_virus_check      # if the x coord doesn't match, skip this virus
-        lb $t2, 2($t1)      # load $t2 with y index of virus
-        beq $t2, $a1, skip_virus_check      # if the y coord doesn't match, skip this virus
-        # here, we know this virus matches
-        sb $zero, 0($t1)    # save the virus' colour as 0
-        addi $s6, $s6, 1    # increment viruses eliminated by 1
-        jr $ra              # return since we have found the relevant cell
         
-        skip_virus_check:
+        beq $t2, $zero, skip_virus_check    # if the colour is already 0, skip this virus
+        lb $t2, 1($t1)                      # load $t2 with x index of virus
+        bne $t2, $a0, skip_virus_check      # if the x coord doesn't match, skip this virus
+        lb $t2, 2($t1)                      # load $t2 with y index of virus
+        bne $t2, $a1, skip_virus_check      # if the y coord doesn't match, skip this virus
+        # here, we know this virus matches
+            sb $zero, 0($t1)    # save the virus' colour as 0
+            addi $s6, $s6, 1    # increment viruses eliminated by 1
+            jr $ra              # return since we have found the relevant cell
+        
+        skip_virus_check:    
         addi $t0, $t0, 1    # increment counter by 1
-        j clear_cell_virus_loop_end
+        j clear_cell_virus_loop
     clear_cell_virus_loop_end:
     
     # Getting to this point means nothing was found in the cell which shouldn't be possible, so exit program

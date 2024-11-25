@@ -264,10 +264,35 @@ calculate_next_grid:
     jr $ra                  # return
     
 # Arguments:
-# $v0: The address of the game grid, should be properly populated at this pint
+# $v0: The address of the game grid
 # Return:
-# none
-calculate_completed_line:
-
-
+# $v0: 1 if the bottle is blocked, 0 if not
+check_blocked_bottle:
+    move $t0, $v0           # move the base address of the game grid into $t0
+    li $t1, 3               # load the first x coord to check into $t1
+    li $t2, 0               # load the first and second y coord to check into $t2
     
+    mul $t3, $t2, 8         # y * cols
+    add $t3, $t3, $t1       # y * cols + x
+    mul $t3, $t3, 4         # (y * cols + x) * Element Size
+    add $t3, $t0, $t3       # address ($t3) = base + offset
+    
+    lw $t4, 0($t3)          # load the element at the coords into $t4
+    bne $t4, $zero, bottle_is_blocked   # if the element there is not 0, the bottle is blocked
+    
+    li $t1, 4               # load the second x coord to check into $t1
+    
+    mul $t3, $t2, 8         # y * cols
+    add $t3, $t3, $t1       # y * cols + x
+    mul $t3, $t3, 4         # (y * cols + x) * Element Size
+    add $t3, $t0, $t3       # address ($t3) = base + offset
+    
+    lw $t4, 0($t3)          # load the element at the coords into $t4
+    bne $t4, $zero, bottle_is_blocked   # if the element there is not 0, the bottle is blocked
+    
+    # Here, we know the bottle is not blocked
+    li $v0, 0               # load return $v0 with 0 to indicate the bottle is not blocked
+    jr $ra                  # return
+    bottle_is_blocked:
+        li $v0, 1           # load return $v1 with 1 to indicate the bottle is blocked
+        jr $ra              # return

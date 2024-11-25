@@ -38,6 +38,8 @@
     spawn_new_capsule:      .word   0           # if this is 1, it should spawn a new capsule
     capsule_finished_falling_status: .word 0           # if this is 1, a capsule has finished falling
     total_score:    .word   0                   # the total score
+    
+    game_over:      .word   0                   # if this is 1, the game is over, 0 otherwise.
 
 ##############################################################################
 # Code
@@ -93,14 +95,28 @@ main:
 game_loop:
     # New capsule spawn
     lw $t0, spawn_new_capsule           # load $t0 with the status of new capsule spawn
+    
     beq $t0, $zero, dont_spawn_new_capsule      # if spawn_new_capsule is 0, don't spawn new one
-    # else, spawn a new one
-    li $t0, 0
-    sw $t0, spawn_new_capsule           # set spawn_new_capsule back to 0
-    lw $v1, num_capsules                # load the number of capsules into argument $a0
-    la $v0, capsules                    # load address of capsules 
-    jal spawn_capsule                   # this will spawn a capsule at the spawn position and store the current number of capsuels on the grid in $v0
-    sw $v0, num_capsules                # save number of capsules
+        # else, attempt to spawn a new one
+        
+        lw $v0, addr_grid_0                 # load $v0 with addr_grid_0
+        jal check_blocked_bottle            # this will check if the neck is blocked by a capsule
+        sw $v0, game_over                   # save 0 if game is not over or 1 if it is
+        beq $v0, $zero, game_is_not_over    # if 0, game is not over
+        # else, the game is over
+            # render game over screen
+            li $v0, 10
+            syscall     # exit the game
+        
+        game_is_not_over:
+        # continue if game isn't over
+        
+        li $t0, 0
+        sw $t0, spawn_new_capsule           # set spawn_new_capsule back to 0
+        lw $v1, num_capsules                # load the number of capsules into argument $a0
+        la $v0, capsules                    # load address of capsules 
+        jal spawn_capsule                   # this will spawn a capsule at the spawn position and store the current number of capsuels on the grid in $v0
+        sw $v0, num_capsules                # save number of capsules
     dont_spawn_new_capsule:
 
     # 1. Check if key has been pressed
@@ -109,17 +125,21 @@ game_loop:
     sw $v0, key_pressed                 # this will save that number into key_pressed
     
     # 2a. Check for collisions and move capsule based on key press
-    la $v1, capsules                    # load $v1 with the capsule address
-    lw $a0, num_capsules                # load $a0 with the number of capsules
-    lw $a1, key_pressed                 # load $a1 with the number of the key that was pressed
-    lw $v0, addr_grid_0                 # load $v0 with the address of grid 0
-    jal move_active_capsule             # this will move the capsule that is currently falling by the player and return nothing
-    sw $v0, capsule_finished_falling_status    # this will be loaded with the status of the new capsule spawn
+    lw $t0, capsule_finished_falling_status     # load $t0 with capsule_finished_falling_status
+    bne $t0, $zero, skip_move_capsule   # if the capsule has finished falling, skip moving it
+        # else, if the capsule is not finished, move it
+        la $v1, capsules                    # load $v1 with the capsule address
+        lw $a0, num_capsules                # load $a0 with the number of capsules
+        lw $a1, key_pressed                 # load $a1 with the number of the key that was pressed
+        lw $v0, addr_grid_0                 # load $v0 with the address of grid 0
+        jal move_active_capsule             # this will move the capsule that is currently falling by the player and return nothing
+        sw $v0, capsule_finished_falling_status    # this will be loaded with the status of capsule falling
+    skip_move_capsule:
     
     # Check the grid for any lines >= 4 in a row and clear them
     lw $t0, capsule_finished_falling_status    # load $t0 with capsule_finished_falling_status
     beq $t0, $zero, skip_line_check     # if the capsule falling status is 0, it means it's still falling, so don't check lines
-        # else, check the lines
+        # else (capsule_finished_falling_status = 1), check the lines
         lw $t0, num_viruses_cleared         # load $t0 with num of viruses cleared
         lw $t1, num_viruses                 # load $t1 with number of viruses
         la $t2, viruses                     # load #t2 with address of viruses
@@ -142,17 +162,9 @@ game_loop:
         addi $sp, $sp, -4                   # increment stack for pushing
         sw $t6, 0($sp)                      # push argument to stack
         jal calculate_lines
-        move $t0, $v0                       # load $t0 with line_cleared status (0 = a line wasn't cleared on this check, 1 = a line was cleared)
-        
-        beq $t0, $zero line_was_cleared    # if a line wasn't cleared, set spawn_capsule_status to 1 and set capsule_finished_faling status to 0
-            # else, if a line was cleared, spawn_capsule_status should be 0 
-            lw $zero, spawn_new_capsule
-            j skip_line_check
-        line_was_cleared:
-            li $t0, 1                       # load $t0 with 1 for spawning capsule
-            sw $t0, spawn_new_capsule       # spawn a new capsule next loop
-            sw $zero, capsule_finished_falling_status   # capsule is not finished falling
-        
+        move $t0, $v0                       # load $t0 with spawn_capsule status (0 = don't spawn 1 = do spawn)
+        sw $t0, spawn_new_capsule           # load spawn_new_capsule with the status
+        sw $v1, capsule_finished_falling_status     # load capsule_finished_falling_status with the status
     skip_line_check:
     
     #li $v0, 1
@@ -170,7 +182,7 @@ game_loop:
 	jal calculate_next_grid             # this funciton will look at all the capsules' data and load them into the grid at the appropriate places
 	
 	# 2b. Update all capsule locations based on gravity
-	li $t0, 60                          # Every 60 frames, the capsules will fall one cell
+	li $t0, 30                          # Every 30 frames, the capsules will fall one cell
 	div $s7, $t0                        # Divide frame counter by 60 to get remainder
 	mfhi $t0                            # Move remainder into $t0
 	bne $t0, $zero, skip_enact_gravity  # Only call gravity function when remainder = 0
@@ -204,3 +216,4 @@ game_loop:
 
     # 5. Go back to Step 1
     j game_loop
+

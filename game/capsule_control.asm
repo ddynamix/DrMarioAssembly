@@ -12,7 +12,7 @@ jr $t0              # this will make sure the code doen't run when loaded in
 # $a0: the number of capsules
 # $a1: the number that corresponds to what key on they keyboard was pressed. Can be of either 0,1,2,3,4,5, but 5 is not relevant here.
 # Return:
-# $v0: spawn a new caspsule status (0 = dont, 1 = do)
+# $v0: finished falling status (0 = still falling, 1 = fell)
 .globl move_active_capsule
 move_active_capsule:
     move $s6, $ra               # save return address in $s6
