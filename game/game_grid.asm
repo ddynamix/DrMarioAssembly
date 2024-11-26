@@ -1,28 +1,32 @@
 .data
-grid_0:     .space      512             # allocate space for one grid
-grid_1:     .space      512             # allocate space for the other grid
-newline:    .asciiz     "\n"            # newline character
-space:      .asciiz     " "             # space character
+    newline:    .asciiz     "\n"            # newline character
+    space:      .asciiz     " "             # space character
 
 .text
 jr $t0              # this will make sure the code doen't run when loaded in
 
+
+# Arguments:
+# $a0: address of grid 0
+# Returns:
+# none
 .globl start_grid
 start_grid:
-    la $t0, grid_0                          # load address of grid_0 into $t0
-    la $t1, grid_1                          # load address of grid_1 into $t1
+    move $t0, $a0                           # load address of grid_0 into $t0
+
     #move $s0, $a0                          # load chosen maximum row level into $s0
     li $s0, 10                              # temporary for testing purpsoes
     #move $s1, $a1                          # load chosen amount of viruses into $s1
     li $s1, 10                              # temporary for testing purposes
+    
     li $t2, 8                               # 8 columns
-    li $t8, 0                               # row index (i)
+    li $t8, 0                               # row index (y)
     traverse_rows:
-        li $t9, 0                               # column index (j)
+        li $t9, 0                               # column index (x)
         traverse_column:
-            mul $t3, $t8, $t2                       # $t3 = i * cols
-            add $t3, $t3, $t9                       # $t3 = i * cols + j
-            mul $t3, $t3, 4                         # $t3 = (i * cols + j) * Element Size
+            mult $t3, $t8, $t2                       # $t3 = y * cols
+            add $t3, $t3, $t9                       # $t3 = y * cols + x
+            mult $t3, $t3, 4                         # $t3 = (y * cols + x) * Element Size
             
             add $t5, $t0, $t3                       # $t5 (address) = base + offset
             sw $zero, 0($t5)                        # initialize element at address to 0                        
@@ -32,9 +36,6 @@ start_grid:
                                                     # number of cols, break out of loop
     addi $t8, $t8, 1                        # increment row index
     blt $t8, 16, traverse_rows              # repeat for all 16 rows
-        
-    la $v0, grid_0                          # load address of grid_0 into $v0
-    la $v1, grid_1                          # load address of grid_1 into $v1
     jr $ra
 
 # Arguments:

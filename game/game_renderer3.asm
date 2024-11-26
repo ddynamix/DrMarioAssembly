@@ -3,7 +3,6 @@
     sprites_image:      .asciiz     "drmariosprites.bmp"        # name of file to read
     image:              .asciiz     "drmario256.bmp"            # name of file to read
     sprite_pixel_buffer_address:   .word   0                    # address of the full pixel spritesheet grid
-        #newline6:            .asciiz     "\n"
 
 .text
 jr $t0              # this will make sure the code doen't run when loaded in
@@ -11,6 +10,7 @@ jr $t0              # this will make sure the code doen't run when loaded in
 # Arguments:
 # $v0: the address of the bitmap display
 # $v1: the address of the file_buffer
+# $a0: the addres of the file
 # Return:
 # none
 load_background:
@@ -19,7 +19,6 @@ load_background:
     
     open_file:
         li $v0, 13                      # system call for opening file
-        la $a0, image                   # load address of image into $a0
         li $a1, 0                       # open for reading
         li $a2, 0                       # empty argument
         syscall                         # open a file
