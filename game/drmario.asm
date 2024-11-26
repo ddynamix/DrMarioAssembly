@@ -20,10 +20,13 @@
 
 .data
 # Immutable Data
+    file_buffer:    .space  196664              # amount of bytes needed for 256*256 bitmap file plus headers
+    pixel_buffer:   .space  262144              # amount of bytes needed for 256*256 bitmap display
+    file_buffer_sprites:    .space      196664       # amount of bytes needed for 256*256 bitmap file plus headers
+    pixel_buffer_sprites:   .space      262144       # amount of bytes needed for 256*256 bitmap display
+    
     ADDR_DSPL:      .word   0x10008000          # The address of the bitmap display. Don't forget to connect it!
     ADDR_KBRD:      .word   0xffff0000          # The address of the keyboard.
-    file_buffer: .space 4000      # amount of bytes needed for 32*32 bitmap file plus headers
-    pixel_buffer: .space 4000      # amount of bytes needed for 32*32 bitmap display
 
 # Mutable Data
     addr_grid_0:    .word   0                   # reserving space for grid_0 address in memory
@@ -59,7 +62,7 @@ la $t0, load4
 .include "capsule_control.asm"
 load4:
 la $t0, load5 
-.include "game_renderer2.asm"
+.include "game_renderer3.asm"
 load5:
 la $t0, load6 
 .include "viruses.asm"
@@ -87,9 +90,14 @@ main:
     la $v0, capsules                    # load address of capsules 
     jal spawn_capsule                   # this will spawn a capsule at the spawn position and store the current number of capsuels on the grid in $v0
     sw $v0, num_capsules                # save number of capsules
+    
+    la $a0, file_buffer_sprites
+    la $a1, pixel_buffer_sprites
+    jal load_all_sprites
   
     lw $v0, ADDR_DSPL                   # load the address of the bitmap display into $v0
     la $v1, file_buffer                 # load the address of the file buffer into $v1
+    la $a0, pixel_buffer_sprites
     jal load_background                 # this function from game_renderer.asm will load the background into the bitmap display
     
 game_loop:

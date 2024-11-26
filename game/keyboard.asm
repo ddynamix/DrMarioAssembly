@@ -1,5 +1,5 @@
 .text
-jr $t0              # this will make sure the code doen't run when loaded in
+jr $t0              # this will make sure the code doesn't run when loaded in
 
 # Arguments:
 # $v0: the address of keyboard in memory
