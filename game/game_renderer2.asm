@@ -69,8 +69,8 @@ load_background:
     lb $s1, 10( $s0 )               # load offset from start of file to pixel data into $s1      
     add $s1, $s1, $s0               # load address of pixel data into $s1
     lh $t3, 16( $s0 )               # load header size into $t3
-    li $t0, 32                     # load image width into $t0
-    li $t1, 32                     # load image height into $t1
+    li $t0, 32                      # load image width into $t0
+    li $t1, 32                      # load image height into $t1
     li $t2, 24                      # load biBitCount (bits per pixel: 1, 4, 8, 16, 24, or 32) into $t2
     addi $t3, $t3, 14               # load the offset from start of file to colour table into $t3
     add $t3, $t3, $s0               # load the address of colour table into $t3
