@@ -181,11 +181,6 @@ valid_row:
     move $t2, $a0                           # $t2 = current row to check
     li $t0, 8                               # $t0 = number of cells in a row
     
-    li $v0, 1
-    li $a0, 8
-    syscall
-    
-    
     # This loop will check the row 3 times, one for each colour.
     li $t1, 1               # $t8 = loop counter. 1 = red, 2 = green, 3 = blue
     valid_row_loop_colours:
@@ -207,7 +202,7 @@ valid_row:
             
             addi $t6, $t1, 3                        # add 3 to the checker to check for it's corresponding virus colour
             beq $t7, $t1, correct_colour_row    # branch if not correct colour
-            beq $t6, $t1, correct_colour_row     # branch if not correct colour
+            beq $t7, $t6, correct_colour_row     # branch if not correct colour
             j not_correct_colour_row               # jump back to top of loop
             
             correct_colour_row:
@@ -232,6 +227,7 @@ valid_row:
         
         blt $t5, 4, row_clear_line_skip # if the counter was less than 4 when the row was finished
             move $a0, $t5                   # load the number of colours found in a row into $a0
+            addi $t3, $t3, 1
             move $a2, $t3                   # load current row position + 1 into $a2 (x)
             move $a3, $t2                   # load index of current row into $a3 (y)
             jal clear_line_row              # jump and link to clear_line_row
@@ -255,6 +251,10 @@ clear_line_row:
     move $t3, $a2       # $t3 = cell position in row (x)
     addi $t3, $t3, -2   # subtract 2 from x pos to get accurate index
     move $t2, $a3       # $t2 = current row (y)
+    
+    li $v0, 1
+    move $a0, $t3
+    syscall
 
     addi $sp, $sp, -4
     sw $ra, 0($sp)      # push $ra to stack
@@ -414,6 +414,8 @@ clear_cell:
     # $s6 = number of viruses cleared
     
     # [debugging] confirmed x and y index are correct here
+    li $v0, 1
+    syscall
     
     # First, check capsule list
     li $t0, 0           # counter to go through capsules
