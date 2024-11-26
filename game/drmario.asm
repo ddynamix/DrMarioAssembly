@@ -44,6 +44,8 @@
     capsule_finished_falling_status: .word 0           # if this is 1, a capsule has finished falling
     total_score:    .word   0                   # the total score
     game_over:      .word   0                   # if this is 1, the game is over, 0 otherwise.
+    theme_space_count:   .word  0               # theme song notes will play every 3 counts.
+
 
 ##############################################################################
 # Code
@@ -71,6 +73,9 @@ load6:
 la $t0, load7 
 .include "line_check_algorithm.asm"
 load7:
+la $t0, load8
+.include "sound_effects.asm"
+load8:
 
 main:
     # Make sure to reset all labels:
@@ -217,7 +222,18 @@ game_loop:
 	lw $v1, ADDR_DSPL
 	jal render_grid_objects
 	
+	# Call sound effect
+    lw $t1, theme_space_count               # Load current counter value
+	bne $t1, 2, no_theme          # if count is not 60, 
+        jal sound_theme_song            # call theme song
+        sw $zero, theme_space_count
+        j sleep
+	no_theme:
+	addi $t1, $t1, 1
+	sw $t1, theme_space_count
+	
 	# 4. Sleep
+	sleep:
 	li $v0, 32                         # system call for sleep
 	li $a0, 17                         # sleep for 17ms, since 1000ms/60fps is 16.66
 	syscall
