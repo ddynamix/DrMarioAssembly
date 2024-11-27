@@ -458,7 +458,7 @@ display_score:
     addi $sp, $sp, -4
     sw $ra, 0($sp)                          # push $ra to stack
     
-    addi $t0, $t0, 85272    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+    addi $t0, $t0, 125220    # adjust the bitmap address to point to the top-right corner of where it should draw the score
     
     li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
     beq $t1, 0, digit_is_0_init  # this ensures that if the score is 0, just display 0.
@@ -611,7 +611,7 @@ display_high_score:
     addi $sp, $sp, -4
     sw $ra, 0($sp)                          # push $ra to stack
     
-    addi $t0, $t0, 60676    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+    addi $t0, $t0, 92452    # adjust the bitmap address to point to the top-right corner of where it should draw the score
                                 # given by ((ypos*256)+xpos-8)*4
     
     li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
@@ -765,7 +765,7 @@ display_num_viruses:
     addi $sp, $sp, -4
     sw $ra, 0($sp)                          # push $ra to stack
     
-    addi $t0, $t0, 156572    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+    addi $t0, $t0, 151416    # adjust the bitmap address to point to the top-right corner of where it should draw the score
                                 # given by ((ypos*256)+xpos-8)*4
     
     li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
@@ -919,7 +919,7 @@ display_current_level:
     addi $sp, $sp, -4
     sw $ra, 0($sp)                          # push $ra to stack
     
-    addi $t0, $t0, 183196    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+    addi $t0, $t0, 184184    # adjust the bitmap address to point to the top-right corner of where it should draw the score
                                 # given by ((ypos*256)+xpos-8)*4
     
     li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
