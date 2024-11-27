@@ -39,10 +39,81 @@ check_key_pressed:
         jr $ra
         
     respond_to_S:
+        # Play drop sound effect.
+        li $v0, 31
+        li $a0, 48                   # Pitch
+        li $a1, 60                   # Duration
+        li $a2, 80                   # Instrument
+        li $a3, 100                  # Volume
+        syscall
+        
+        # sleep for length of note
+    	li $v0, 32                    # System call for sleep
+    	li $a0, 60                    # Sleep for 500ms
+    	syscall
+        
+        li $v0, 31
+        li $a0, 40                    # Pitch
+        li $a1, 120                   # Duration
+        li $a2, 80                    # Instrument
+        li $a3, 100                   # Volume
+        syscall
+        
+        # sleep for length of note
+    	li $v0, 32                    # System call for sleep
+    	li $a0, 120                   # Sleep for 500ms
+    	syscall
+        
+        li $v0, 31
+        li $a0, 56                    # Pitch
+        li $a1, 30                    # Duration
+        li $a2, 80                    # Instrument
+        li $a3, 100                   # Volume
+        syscall
+        
         li $v0, 3
         jr $ra
         
     respond_to_W:
+        # Play rotate sound effect.
+        li $v0, 31
+        li $a0, 60                   # Pitch
+        li $a1, 120                  # Duration
+        li $a2, 80                   # Instrument
+        li $a3, 100                  # Volume
+        syscall
+        
+        # sleep for length of note
+    	li $v0, 32                    # System call for sleep
+    	li $a0, 120                   # Sleep for 500ms
+    	syscall
+        
+        li $v0, 31
+        li $a0, 64                    # Pitch
+        li $a1, 60                    # Duration
+        li $a2, 80                    # Instrument
+        li $a3, 100                   # Volume
+        syscall
+        
+        li $v0, 31
+        li $a0, 68                    # Pitch
+        li $a1, 60                    # Duration
+        li $a2, 80                    # Instrument
+        li $a3, 100                   # Volume
+        syscall
+        
+        # sleep for length of note
+    	li $v0, 32                    # System call for sleep
+    	li $a0, 60                    # Sleep for 500ms
+    	syscall
+        
+        li $v0, 31
+        li $a0, 60                    # Pitch
+        li $a1, 60                    # Duration
+        li $a2, 80                    # Instrument
+        li $a3, 100                   # Volume
+        syscall
+    
         li $v0, 1
         jr $ra
         

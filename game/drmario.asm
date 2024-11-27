@@ -250,6 +250,9 @@ game_loop:
     
 # This loop will occur when the game is lost
 game_over_screen:
+
+    jal sound_game_over
+    
     lw $v0, ADDR_DSPL                   # load the address of the bitmap display into $v0
     la $v1, file_buffer                 # load the address of the file buffer into $v1
     la $a0, game_over_screen_name       # load the address of the bmp file for the background
@@ -275,6 +278,3 @@ game_over_screen:
         
     user_select_yes:
         j main
-    
-    
-

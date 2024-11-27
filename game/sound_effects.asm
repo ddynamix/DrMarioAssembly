@@ -936,17 +936,6 @@
     theme_counter: .word 0  # Counter for theme song calls
 .text
 jr $t0              # This will make sure the code doen't run when loaded in
-
-# Arguments: none
-# Return: none
-# sound_game_over:
-    # li $v0, 31
-    # li $a0, 70 # pitch
-    # li $a1, 250 # duration
-    # li $a2, 80 # instrument
-    # li $a3, 30 # volume
-    # syscall
-    # j return_to_main
     
 # Arguments: none
 # Return: none
@@ -979,7 +968,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 56                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -998,7 +987,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 12                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
 
@@ -1017,7 +1006,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 35                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1036,7 +1025,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 38                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1055,7 +1044,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 118                  # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1074,7 +1063,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 80                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1093,7 +1082,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 11                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1112,7 +1101,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 0                    # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1131,7 +1120,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 55                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1150,7 +1139,7 @@ sound_theme_song:
 
     # 3. Set up and play the sound
     li $a2, 25                   # Instrument
-    li $a3, 70                   # Volume
+    li $a3, 30                   # Volume
     li $v0, 31                   # System call for sound effect
     syscall
     
@@ -1167,6 +1156,45 @@ sound_theme_song:
     sw $t1, 0($t0)               # Save the updated counter value
 
     j return_to_main             # Return to the main function
+
+
+# Arguments: none
+# Return: none
+sound_game_over:
+    # play dun - dun - duuuuuun
+    li $v0, 31
+    li $a0, 36                   # Pitch
+    li $a1, 500                  # Duration
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+	li $v0, 32                    # System call for sleep
+	li $a0, 500                   # Sleep for 500ms
+	syscall
+    
+    li $v0, 31
+    li $a0, 39                    # Pitch
+    li $a1, 250                   # Duration
+    li $a2, 80                    # Instrument
+    li $a3, 100                   # Volume
+    syscall
+    
+    # sleep for length of note
+	li $v0, 32                    # System call for sleep
+	li $a0, 250                   # Sleep for 500ms
+	syscall
+    
+    li $v0, 31
+    li $a0, 43                    # Pitch
+    li $a1, 1000                  # Duration
+    li $a2, 80                    # Instrument
+    li $a3, 100                   # Volume
+    syscall
+    
+    j return_to_main
+
 
 # Return to calling program.
 return_to_main:
