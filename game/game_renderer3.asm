@@ -447,6 +447,621 @@ load_all_sprites:
 
 
 # Arguments:
+# $a0: the address of the bitmap display
+# $a1: the score
+# Returns:
+# none
+display_score:
+    move $t0, $a0           # load the bitmap address into $t0
+    move $t1, $a1           # load the score into $t1
+    
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)                          # push $ra to stack
+    
+    addi $t0, $t0, 85272    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+    
+    li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
+    beq $t1, 0, digit_is_0_init  # this ensures that if the score is 0, just display 0.
+    recursive_score:        # this function will recursively display the score
+        beq $t1, $zero, full_score_displayed      # BASE CASE: if the score is 0, we're finished
+        digit_is_0_init:
+        li $t2, 10
+        div $t1, $t2            # divide the score by 10
+        mflo $t1                # load the score divided by 10 back into $t1
+        mfhi $t3                # load the remainder into $t3
+        
+        mult $t5, $t4, 32       # multiply the counter by 32 to get the appropriate offset to draw the digit
+        sub $t5, $t0, $t5       # $t5 = the address of the bitmap display to draw the digit to
+        
+        beq $t3, 0, digit_is_0
+        beq $t3, 1, digit_is_1
+        beq $t3, 2, digit_is_2
+        beq $t3, 3, digit_is_3
+        beq $t3, 4, digit_is_4
+        beq $t3, 5, digit_is_5
+        beq $t3, 6, digit_is_6
+        beq $t3, 7, digit_is_7
+        beq $t3, 8, digit_is_8
+        beq $t3, 9, digit_is_9
+        
+        # Code should never reach here
+        li $v0, 1
+        li $a0, -2
+        syscall
+        li $v0, 10
+        syscall     # print -2 and exit the program
+        
+        digit_is_0:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 0           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+
+        digit_is_1:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 1           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_2:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 2           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_3:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 3           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_4:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 4           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_5:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 5           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_6:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 6           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_7:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 7           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_8:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 8           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+        digit_is_9:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 9           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_score
+            
+    
+    full_score_displayed:
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4    # pop $ra from stack
+    
+    jr $ra      # return
+    
+
+# Arguments:
+# $a0: the address of the bitmap display
+# $a1: the high score
+# Returns:
+# none
+display_high_score:
+    move $t0, $a0           # load the bitmap address into $t0
+    move $t1, $a1           # load the score into $t1
+    
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)                          # push $ra to stack
+    
+    addi $t0, $t0, 60676    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+                                # given by ((ypos*256)+xpos-8)*4
+    
+    li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
+    beq $t1, 0, hdigit_is_0_init  # this ensures that if the score is 0, just display 0.
+    recursive_high_score:        # this function will recursively display the score
+        beq $t1, $zero, hfull_score_displayed      # BASE CASE: if the score is 0, we're finished
+        hdigit_is_0_init:
+        li $t2, 10
+        div $t1, $t2            # divide the score by 10
+        mflo $t1                # load the score divided by 10 back into $t1
+        mfhi $t3                # load the remainder into $t3
+        
+        mult $t5, $t4, 32       # multiply the counter by 32 to get the appropriate offset to draw the digit
+        sub $t5, $t0, $t5       # $t5 = the address of the bitmap display to draw the digit to
+        
+        beq $t3, 0, hdigit_is_0
+        beq $t3, 1, hdigit_is_1
+        beq $t3, 2, hdigit_is_2
+        beq $t3, 3, hdigit_is_3
+        beq $t3, 4, hdigit_is_4
+        beq $t3, 5, hdigit_is_5
+        beq $t3, 6, hdigit_is_6
+        beq $t3, 7, hdigit_is_7
+        beq $t3, 8, hdigit_is_8
+        beq $t3, 9, hdigit_is_9
+        
+        # Code should never reach here
+        li $v0, 1
+        li $a0, -2
+        syscall
+        li $v0, 10
+        syscall     # print -2 and exit the program
+        
+        hdigit_is_0:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 0           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+
+        hdigit_is_1:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 1           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_2:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 2           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_3:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 3           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_4:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 4           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_5:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 5           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_6:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 6           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_7:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 7           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_8:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 8           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+        hdigit_is_9:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 9           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_high_score
+            
+    
+    hfull_score_displayed:
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4    # pop $ra from stack
+    
+    jr $ra      # return
+    
+    
+# Arguments:
+# $a0: the address of the bitmap display
+# $a1: the number of viruses left
+# Returns:
+# none
+display_num_viruses:
+    move $t0, $a0           # load the bitmap address into $t0
+    move $t1, $a1           # load the score into $t1
+    
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)                          # push $ra to stack
+    
+    addi $t0, $t0, 156572    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+                                # given by ((ypos*256)+xpos-8)*4
+    
+    li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
+    beq $t1, 0, vdigit_is_0_init  # this ensures that if the score is 0, just display 0.
+    recursive_num_viruses:        # this function will recursively display the score
+        beq $t1, $zero, num_viruses_displayed      # BASE CASE: if the score is 0, we're finished
+        vdigit_is_0_init:
+        li $t2, 10
+        div $t1, $t2            # divide the score by 10
+        mflo $t1                # load the score divided by 10 back into $t1
+        mfhi $t3                # load the remainder into $t3
+        
+        mult $t5, $t4, 32       # multiply the counter by 32 to get the appropriate offset to draw the digit
+        sub $t5, $t0, $t5       # $t5 = the address of the bitmap display to draw the digit to
+        
+        beq $t3, 0, vdigit_is_0
+        beq $t3, 1, vdigit_is_1
+        beq $t3, 2, vdigit_is_2
+        beq $t3, 3, vdigit_is_3
+        beq $t3, 4, vdigit_is_4
+        beq $t3, 5, vdigit_is_5
+        beq $t3, 6, vdigit_is_6
+        beq $t3, 7, vdigit_is_7
+        beq $t3, 8, vdigit_is_8
+        beq $t3, 9, vdigit_is_9
+        
+        # Code should never reach here
+        li $v0, 1
+        li $a0, -2
+        syscall
+        li $v0, 10
+        syscall     # print -2 and exit the program
+        
+        vdigit_is_0:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 0           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+
+        vdigit_is_1:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 1           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_2:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 2           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_3:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 3           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_4:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 4           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_5:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 5           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_6:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 6           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_7:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 7           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_8:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 8           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+        vdigit_is_9:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 9           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_num_viruses
+            
+    
+    num_viruses_displayed:
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4    # pop $ra from stack
+    
+    jr $ra      # return
+    
+    
+# Arguments:
+# $a0: the address of the bitmap display
+# $a1: the current level
+# Returns:
+# none
+display_current_level:
+    move $t0, $a0           # load the bitmap address into $t0
+    move $t1, $a1           # load the score into $t1
+    
+    addi $sp, $sp, -4
+    sw $ra, 0($sp)                          # push $ra to stack
+    
+    addi $t0, $t0, 183196    # adjust the bitmap address to point to the top-right corner of where it should draw the score
+                                # given by ((ypos*256)+xpos-8)*4
+    
+    li $t4, 0               # counter for number of recursive loops, reflects the digits place (0 = ones, 1 = tens etc.)
+    beq $t1, 0, ldigit_is_0_init  # this ensures that if the score is 0, just display 0.
+    recursive_level:        # this function will recursively display the score
+        beq $t1, $zero, current_level_displayed      # BASE CASE: if the score is 0, we're finished
+        ldigit_is_0_init:
+        li $t2, 10
+        div $t1, $t2            # divide the score by 10
+        mflo $t1                # load the score divided by 10 back into $t1
+        mfhi $t3                # load the remainder into $t3
+        
+        mult $t5, $t4, 32       # multiply the counter by 32 to get the appropriate offset to draw the digit
+        sub $t5, $t0, $t5       # $t5 = the address of the bitmap display to draw the digit to
+        
+        beq $t3, 0, ldigit_is_0
+        beq $t3, 1, ldigit_is_1
+        beq $t3, 2, ldigit_is_2
+        beq $t3, 3, ldigit_is_3
+        beq $t3, 4, ldigit_is_4
+        beq $t3, 5, ldigit_is_5
+        beq $t3, 6, ldigit_is_6
+        beq $t3, 7, ldigit_is_7
+        beq $t3, 8, ldigit_is_8
+        beq $t3, 9, ldigit_is_9
+        
+        # Code should never reach here
+        li $v0, 1
+        li $a0, -2
+        syscall
+        li $v0, 10
+        syscall     # print -2 and exit the program
+        
+        ldigit_is_0:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 0           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+
+        ldigit_is_1:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 1           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_2:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 2           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_3:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 3           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_4:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 4           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_5:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 5           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_6:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 6           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_7:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 7           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_8:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 8           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+        ldigit_is_9:
+            move $a0, $t5       # load address of where to draw sprite into $a0
+            li $a1, 9           # x index
+            li $a2, 1           # y index
+            jal push_all_t_registers_to_stack_renderer
+            jal draw_sprite     # call the draw_sprite funciton
+            jal pop_all_t_registers_from_stack_renderer
+            addi $t4, $t4, 1
+            j recursive_level
+            
+    
+    current_level_displayed:
+    lw $ra, 0($sp)
+    addi $sp, $sp, 4    # pop $ra from stack
+    
+    jr $ra      # return
+
+
+# Arguments:
 # $a0: the address of where to draw the sprite on the bitmap display (top left corner)
 # $a1: the x index of the sprite in the sprite sheet to display
 # $a2: the y index of the sprite in the sprite sheet to display

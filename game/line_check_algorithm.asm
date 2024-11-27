@@ -1,8 +1,10 @@
 .data
     line_cleared:   .half       0       # this will be set to one if it successfully clears a line.
     seconds_passed: .half       0       # this will keep track of the seconds passed since last line cleared
+    score_addr:     .word       0       # the address of where the score is kept
 
 .text
+sw $t1, score_addr
 
 jr $t0              # this will make sure the code doesn't run when loaded in
 
@@ -31,7 +33,7 @@ calculate_lines:
     addi $sp, $sp, 4            # move stack pointer
     lw $s5, 0($sp)              # $s5 = total number of viruses
     addi $sp, $sp, 4            # move stack pointer
-    lw $s6, 0($sp)              # $s6 = number of viruses cleared
+    lw $s6, 0($sp)              # $s6 = address of viruses cleared
     addi $sp, $sp, 4            # move stack pointer
     
     addi $sp, $sp, -4
@@ -57,7 +59,7 @@ calculate_lines:
         not_one_second:                     # continue
     
         lh $t1, seconds_passed              # load number of seconds passed into $t1
-        blt $t1, 4, return_from_line_check  # if the counter is not yet 4, skip the rest of the check line function
+        blt $t1, 3, return_from_line_check  # if the counter is not yet 3, skip the rest of the check line function
         # else, counter is 4, run through function again
             sh $zero, seconds_passed        # reset seconds passed counter to 0
             sh $zero, line_cleared          # set line_cleared back to 0
@@ -252,10 +254,6 @@ clear_line_row:
     move $t3, $a2       # $t3 = cell position in row (x)
     addi $t3, $t3, -2   # subtract 2 from x pos to get accurate index
     move $t2, $a3       # $t2 = current row (y)
-    
-    li $v0, 1
-    move $a0, $t3
-    syscall
 
     addi $sp, $sp, -4
     sw $ra, 0($sp)      # push $ra to stack
@@ -279,7 +277,13 @@ clear_line_row:
     li $t6, 1               # load $t6 with one because we cleared a line
     sh $t6, line_cleared    # set line_cleared to 1
     
+    lw $t6, score_addr      # load the address of the score into $t6
+    lw $t7, 0($t6)          # load the value of the score into $t6
+    addi $t7, $t7, 10       # add 10 to the score
+    sw $t7, 0($t6)          # save the score back into score address
+
     jal sound_four_in_a_row # play sound effect
+
     
     jal pop_all_t_registers_from_stack
     lw $ra, 0($sp)
@@ -395,7 +399,13 @@ clear_line_column:
     li $t6, 1               # load $t6 with one because we cleared a line
     sh $t6, line_cleared    # set line_cleared to 1
     
+    lw $t6, score_addr      # load the address of the score into $t6
+    lw $t7, 0($t6)          # load the value of the score into $t6
+    addi $t7, $t7, 10       # add 10 to the score
+    sw $t7, 0($t6)          # save the score back into score address
+
     jal sound_four_in_a_row # play sound effect
+
     
     jal pop_all_t_registers_from_stack
     lw $ra, 0($sp)
@@ -416,11 +426,9 @@ clear_cell:
     # $s3 = total number of capsules
     # $s4 = address of viruses
     # $s5 = total number of viruses
-    # $s6 = number of viruses cleared
+    # $s6 = address number of viruses cleared
     
     # [debugging] confirmed x and y index are correct here
-    li $v0, 1
-    syscall
     
     # First, check capsule list
     li $t0, 0           # counter to go through capsules
@@ -492,7 +500,9 @@ clear_cell:
         bne $t2, $a1, skip_virus_check      # if the y coord doesn't match, skip this virus
         # here, we know this virus matches
             sb $zero, 0($t1)    # save the virus' colour as 0
-            addi $s6, $s6, 1    # increment viruses eliminated by 1
+            lw $t5, 0($s6)
+            addi $t5, $t5, 1
+            sw $t5, 0($s6)      # increment viruses eliminated by 1
             jr $ra              # return since we have found the relevant cell
         
         skip_virus_check:    
