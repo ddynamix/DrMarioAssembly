@@ -50,6 +50,8 @@
     game_over:      .word   0                   # if this is 1, the game is over, 0 otherwise.
     level:          .word   0                   # the current level the player is on
     difficulty:     .word   1                   # the difficulty the player chose. 1 = easy, 2 = medium, 3 = hard
+    theme_space_count:   .word  0               # theme song notes will play every 3 counts.
+
 
 ##############################################################################
 # Code
@@ -78,6 +80,9 @@ la $t0, load7
 la $t1, total_score
 .include "line_check_algorithm.asm"
 load7:
+la $t0, load8
+.include "sound_effects.asm"
+load8:
 
 li $s0, 0           # counter for animation frame
 start_menu:
@@ -301,8 +306,20 @@ game_loop:
 	mflo $a1                           # move the quotient into $a1
 	lw $a0, ADDR_DSPL                  # load the address for the grid into $a0
 	jal display_current_level
+  
+	# Call sound effect
+    lw $t1, theme_space_count               # Load current counter value
+	bne $t1, 2, no_theme          # if count is not 60, 
+        jal sound_theme_song            # call theme song
+        sw $zero, theme_space_count
+        j sleep
+	no_theme:
+	addi $t1, $t1, 1
+	sw $t1, theme_space_count
+
 	
 	# 4. Sleep
+	sleep:
 	li $v0, 32                         # system call for sleep
 	li $a0, 17                         # sleep for 17ms, since 1000ms/60fps is 16.66
 	syscall
@@ -319,6 +336,9 @@ game_loop:
     
 # This loop will occur when the game is lost
 game_over_screen:
+
+    jal sound_game_over
+    
     lw $v0, ADDR_DSPL                   # load the address of the bitmap display into $v0
     la $v1, file_buffer                 # load the address of the file buffer into $v1
     la $a0, game_over_screen_name       # load the address of the bmp file for the background
@@ -372,3 +392,4 @@ game_paused:
         la $a0, game_background_name        # load the address of the bmp file for the background
         jal load_background                 # this function from game_renderer.asm will load the game over screen into the bitmap display
         j game_not_paused                   # jump back to main game loop
+

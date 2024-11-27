@@ -5,6 +5,7 @@
 
 .text
 sw $t1, score_addr
+
 jr $t0              # this will make sure the code doesn't run when loaded in
 
 # Arguments (from top of stack to bottom):
@@ -280,6 +281,9 @@ clear_line_row:
     lw $t7, 0($t6)          # load the value of the score into $t6
     addi $t7, $t7, 10       # add 10 to the score
     sw $t7, 0($t6)          # save the score back into score address
+
+    jal sound_four_in_a_row # play sound effect
+
     
     jal pop_all_t_registers_from_stack
     lw $ra, 0($sp)
@@ -399,6 +403,9 @@ clear_line_column:
     lw $t7, 0($t6)          # load the value of the score into $t6
     addi $t7, $t7, 10       # add 10 to the score
     sw $t7, 0($t6)          # save the score back into score address
+
+    jal sound_four_in_a_row # play sound effect
+
     
     jal pop_all_t_registers_from_stack
     lw $ra, 0($sp)
@@ -556,5 +563,67 @@ pop_all_t_registers_from_stack:
     addi $sp, $sp, 4
     lw $t0, 0($sp)
     addi $sp, $sp, 4
+    
+    jr $ra
+
+
+# Arguments: none
+# Return: none
+# Makes sound effect to be called when four in a row are found.
+sound_four_in_a_row:
+    li $v0, 31
+    li $a0, 35                    # Pitch
+    li $a1, 120                   # Duration
+    li $a2, 80                    # Instrument
+    li $a3, 100                   # Volume
+    syscall
+    
+    # sleep for length of note
+	li $v0, 32                    # System call for sleep
+	li $a0, 120                   # Sleep for 500ms
+	syscall
+    
+    li $v0, 31
+    li $a0, 38                    # Pitch
+    li $a1, 120                   # Duration
+    li $a2, 80                    # Instrument
+    li $a3, 100                   # Volume
+    syscall
+    
+    # sleep for length of note
+	li $v0, 32                    # System call for sleep
+	li $a0, 120                   # Sleep for 500ms
+	syscall
+    
+    li $v0, 31
+    li $a0, 38                    # Pitch
+    li $a1, 120                   # Duration
+    li $a2, 80                    # Instrument
+    li $a3, 100                   # Volume
+    syscall
+    
+    # sleep for length of note
+	li $v0, 32                    # System call for sleep
+	li $a0, 120                   # Sleep for 500ms
+	syscall
+    
+    li $v0, 31
+    li $a0, 42                    # Pitch
+    li $a1, 120                   # Duration
+    li $a2, 80                    # Instrument
+    li $a3, 100                   # Volume
+    syscall
+    
+    # sleep for length of note
+	li $v0, 32                    # System call for sleep
+	li $a0, 240                   # Sleep for 500ms
+	syscall
+    
+    li $v0, 31
+    li $a0, 36                    # Pitch
+    li $a1, 480                   # Duration
+    li $a2, 80                    # Instrument 
+    li $a3, 100                   # Volume
+    syscall
     
     jr $ra
