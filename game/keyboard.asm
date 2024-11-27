@@ -21,7 +21,7 @@ check_key_pressed:
         beq $a0, 0x64, respond_to_D     # Check if the key d was pressed
         beq $a0, 0x73, respond_to_S     # Check if the key s was pressed
         beq $a0, 0x77, respond_to_W     # Check if the key w was pressed
-                                        # Check if the key p was pressed
+        beq $a0, 0x70, respond_to_P     # Check if the key p was pressed
     
         li $v0, 0                       # no relevant key pressed so load return register with 0
         jr $ra                          # return

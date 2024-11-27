@@ -1,5 +1,5 @@
 ################# CSC258 Assembly Final Project ###################
-# This file contains our implementation of Dr Mario.
+# This file, as well as the files included, contains our implementation of Dr Mario.
 #
 # Student 1: Tyler Steptoe, 1009197441
 # Student 2: Katarina Vucic, 1008269400
@@ -30,6 +30,9 @@
     
     game_background_name:   .asciiz     "drmario256.bmp"
     game_over_screen_name:  .asciiz     "gameover.bmp"
+    paused_screen_name:     .asciiz     "paused.bmp"
+    main_menu_1:            .asciiz     "mainmenu1.bmp"
+    blank_buffer:           .asciiz     "lo"
     
     grid_0:         .space  512                 # reserving space for grid_0 address in memory
     capsules:       .space  256                 # reserving space for capsule array in memory
@@ -43,7 +46,10 @@
     spawn_new_capsule:      .word   0           # if this is 1, it should spawn a new capsule
     capsule_finished_falling_status: .word 0           # if this is 1, a capsule has finished falling
     total_score:    .word   0                   # the total score
+    high_score:     .word   0                   # the high score
     game_over:      .word   0                   # if this is 1, the game is over, 0 otherwise.
+    level:          .word   0                   # the current level the player is on
+    difficulty:     .word   1                   # the difficulty the player chose. 1 = easy, 2 = medium, 3 = hard
 
 ##############################################################################
 # Code
@@ -69,8 +75,30 @@ la $t0, load6
 .include "viruses.asm"
 load6:
 la $t0, load7 
+la $t1, total_score
 .include "line_check_algorithm.asm"
 load7:
+
+li $s0, 0           # counter for animation frame
+start_menu:
+    # load main menu
+    lw $v0, ADDR_DSPL                   # load the address of the bitmap display into $v0
+    la $v1, file_buffer                 # load the address of the file buffer into $v1
+    la $a0, main_menu_1                 # load the address of the bmp file for the background
+    jal load_background                 # this function from game_renderer.asm will load the background into the bitmap display
+    
+    start_menu_loop:
+        lw $v0, ADDR_KBRD                   # load the address of the keyboard into $v0 for funtion
+        jal check_key_pressed               # this will call the function that will then load the appropriate number into $v0 depending on the key presssed
+        sw $v0, key_pressed                 # this will save that number into key_pressed
+        
+        beq $v0, 4, main                    # if the user hits D, start the game
+    	# Sleep
+    	li $v0, 32                         # system call for sleep
+    	li $a0, 17                         # sleep for 17ms, since 1000ms/60fps is 16.66
+    	syscall
+
+        j start_menu_loop                   # jump back to start of loop
 
 main:
     # Make sure to reset all labels:
@@ -80,20 +108,26 @@ main:
     sw $zero, key_pressed
     sw $zero, spawn_new_capsule
     sw $zero, capsule_finished_falling_status
-    sw $zero, total_score
     sw $zero, game_over
     
     # load the actual game
     li $s7, 0                           # Begin frame counter at 0
     
-    la $a0, grid_0                 # this will load $a0 with the address of grid 0
+    la $a0, grid_0                      # this will load $a0 with the address of grid 0
     jal start_grid                      # this will call the function from game_grid.asm. $v0 will return with one grid address and $v1 will return with the other.
     
-    li $v0, 4                           # load number of viruses into $v0
-    sw $v0, num_viruses
-    lw $v0, num_viruses
-    la $v1, viruses
-    li $a0, 10                          # 10 is the max row the viruses can spawn on
+    li $t0, 4                           # load base number of viruses into $t0 (4)
+    lw $t2, level                       # load the level number into $t2
+    add $t0, $t0, $t2                   # add the level number to the number of viruses
+    lw $t2, difficulty                  # load the difficulty number into $t2
+    mult $v0, $t0, $t2                  # multiply the difficulty by the viruses to get the new number of viruses and load into $v0.
+    
+    li $t4, 10
+    sub $t3, $t4, $t2                   # sub the difficulty number to 10 to get the max row they can spawn on
+    
+    sw $v0, num_viruses                 # save the number of viruses into num_viruses
+    la $v1, viruses                     # $v1 is the address of the viruses list
+    move $a0, $t3                       # $a0 is the max row the viruses can spawn on
     jal spawn_viruses
     
     lw $v1, num_capsules                # load the number of capsules into argument $a0
@@ -133,11 +167,29 @@ game_loop:
         jal spawn_capsule                   # this will spawn a capsule at the spawn position and store the current number of capsuels on the grid in $v0
         sw $v0, num_capsules                # save number of capsules
     dont_spawn_new_capsule:
+    
+    # Check if all the viruses are cleared
+    lw $t0, num_viruses                 # load the original number of viruses into $t0
+    lw $t1, num_viruses_cleared         # load the number of viruses cleared into $t1
+    bne $t0, $t1, viruses_still_active  # if the number of viruses doesn't match the amount cleared, there are still viruses
+        # else, all the viruses are cleared, go to next level
+        lw $t0, level
+        addi $t0, $t0, 2                # increase level by 2
+        sw $t0, level
+        j main                          # restart game
+    viruses_still_active:
 
     # 1. Check if key has been pressed
     lw $v0, ADDR_KBRD                   # load the address of the keyboard into $v0 for funtion
     jal check_key_pressed               # this will call the function that will then load the appropriate number into $v0 depending on the key presssed
     sw $v0, key_pressed                 # this will save that number into key_pressed
+    
+    # if the key pressed was 'P', pause the game
+    lw $t0, key_pressed                 # load the key pressed into $t0
+    bne $t0, 5, game_not_paused         # if key_pressed is not 5 (code for 'P'), game isn't paused
+        # else, it is paused
+        j game_paused
+    game_not_paused:
     
     # 2a. Check for collisions and move capsule based on key press
     lw $t0, capsule_finished_falling_status     # load $t0 with capsule_finished_falling_status
@@ -155,13 +207,13 @@ game_loop:
     lw $t0, capsule_finished_falling_status    # load $t0 with capsule_finished_falling_status
     beq $t0, $zero, skip_line_check     # if the capsule falling status is 0, it means it's still falling, so don't check lines
         # else (capsule_finished_falling_status = 1), check the lines
-        lw $t0, num_viruses_cleared         # load $t0 with num of viruses cleared
+        la $t0, num_viruses_cleared         # load $t0 with num of viruses cleared
         lw $t1, num_viruses                 # load $t1 with number of viruses
         la $t2, viruses                     # load #t2 with address of viruses
         lw $t3, num_capsules                # load $t3 with number of capsules
         la $t4, capsules                    # load $t4 with address of capsules
         la $t5, total_score                 # load $t5 with the address of the total score
-        la $t6, grid_0                 # load $t6 with the address of the grid
+        la $t6, grid_0                      # load $t6 with the address of the grid
         addi $sp, $sp, -4                   # increment stack for pushing
         sw $t0, 0($sp)                      # push argument to stack
         addi $sp, $sp, -4                   # increment stack for pushing
@@ -192,12 +244,12 @@ game_loop:
     la $v0, grid_0                 # load the address of grid 0 into $v0
 	lw $a1, num_capsules                # load the number of capsules into $a1
     la $a0, capsules                    # load the address of capsule list into $a0 for calculate_next_grid function
-    la $a2, viruses                     # load the address of list ofviruses into $a2
+    la $a2, viruses                     # load the address of list of viruses into $a2
     lw $a3, num_viruses                 # load the number of viruses into $a3
 	jal calculate_next_grid             # this funciton will look at all the capsules' data and load them into the grid at the appropriate places
 	
 	# 2b. Update all capsule locations based on gravity
-	li $t0, 30                          # Every 30 frames, the capsules will fall one cell
+	li $t0, 20                          # Every 30 frames, the capsules will fall one cell
 	div $s7, $t0                        # Divide frame counter by 60 to get remainder
 	mfhi $t0                            # Move remainder into $t0
 	bne $t0, $zero, skip_enact_gravity  # Only call gravity function when remainder = 0
@@ -217,6 +269,39 @@ game_loop:
 	lw $v1, ADDR_DSPL
 	jal render_grid_objects
 	
+	# Update the high score
+	lw $t0, total_score                # load the total score into $t0
+	lw $t1, high_score                 # load the high score into $t1
+	blt $t0, $t1, skip_setting_high_score   # if the total score is less than the high score, skip setting high score
+	   # else set the high score to the current score
+	   sw $t0, high_score                  # save the total score into the high score
+	skip_setting_high_score:
+	
+	# Update the displayed score
+	lw $a0, ADDR_DSPL                  # load the address for the grid into $a0
+	lw $a1, total_score                # load the score into $a1
+	jal display_score
+	
+	# Update the displayed high score
+	lw $a0, ADDR_DSPL                  # load the address for the grid into $a0
+	lw $a1, high_score                # load the high score into $a1
+	jal display_high_score
+	
+	# Update the displayed number of viruses
+	lw $t0, num_viruses                # load the beginning number of viruses into $t0
+	lw $t1, num_viruses_cleared        # load the amount of cleared viruses into $t1
+	sub $a1, $t0, $t1                  # subtract the number of cleared viruses from the number of total viruses to get the current number of viruses
+	lw $a0, ADDR_DSPL                  # load the address for the grid into $a0
+	jal display_num_viruses
+	
+	# Update the displayed level
+	lw $t0, level                      # load the level number into $t0
+	li $t1, 2                          # load 2 into $t1
+	div $t0, $t1                       # divide the level by 2 to get the accurate number
+	mflo $a1                           # move the quotient into $a1
+	lw $a0, ADDR_DSPL                  # load the address for the grid into $a0
+	jal display_current_level
+	
 	# 4. Sleep
 	li $v0, 32                         # system call for sleep
 	li $a0, 17                         # sleep for 17ms, since 1000ms/60fps is 16.66
@@ -225,9 +310,9 @@ game_loop:
 	# Frame counter
 	addi $s7, $s7, 1                   # increment frame counter by 1
 	li $t0, 60                         # set it to reset at 60
-	bne $s7, $t0, skip_frame_counter_reset     # if it's not at 60, don't reset
+	bne $s7, $t0, skip_frame_counter_reset_g     # if it's not at 60, don't reset
 	li $s7, 0                          # reset frame counter
-	skip_frame_counter_reset:
+	skip_frame_counter_reset_g:
 
     # 5. Go back to Step 1
     j game_loop
@@ -238,6 +323,8 @@ game_over_screen:
     la $v1, file_buffer                 # load the address of the file buffer into $v1
     la $a0, game_over_screen_name       # load the address of the bmp file for the background
     jal load_background                 # this function from game_renderer.asm will load the game over screen into the bitmap display
+    
+    sw $zero, total_score               # reset score
     
     game_over_await_option:
         lw $v0, ADDR_KBRD                   # load the address of the keyboard into $v0 for funtion
@@ -261,4 +348,27 @@ game_over_screen:
         j main
     
     
-
+game_paused:
+    lw $v0, ADDR_DSPL                   # load the address of the bitmap display into $v0
+    la $v1, file_buffer                 # load the address of the file buffer into $v1
+    la $a0, paused_screen_name          # load the address of the bmp file for the background
+    jal load_background                 # this function from game_renderer.asm will load the game over screen into the bitmap display
+    
+    game_paused_await_option:
+        lw $v0, ADDR_KBRD                   # load the address of the keyboard into $v0 for funtion
+        jal check_key_pressed               # this will call the function that will then load the appropriate number into $v0 depending on the key presssed
+        sw $v0, key_pressed                 # this will save that number into key_pressed
+        
+        beq $v0, 5, game_unpaused           # if the user hits P, unpause the game
+        
+        li $v0, 32                          # system call for sleep
+    	li $a0, 17                             # sleep for 17ms, since 1000ms/60fps is 16.66
+    	syscall
+        j game_paused_await_option
+        
+    game_unpaused:
+        lw $v0, ADDR_DSPL                   # load the address of the bitmap display into $v0
+        la $v1, file_buffer                 # load the address of the file buffer into $v1
+        la $a0, game_background_name        # load the address of the bmp file for the background
+        jal load_background                 # this function from game_renderer.asm will load the game over screen into the bitmap display
+        j game_not_paused                   # jump back to main game loop
