@@ -1171,7 +1171,7 @@ sound_game_over:
     
     # sleep for length of note
 	li $v0, 32                    # System call for sleep
-	li $a0, 500                   # Sleep for 500ms
+	li $a0, 500                   
 	syscall
     
     li $v0, 31
@@ -1183,7 +1183,7 @@ sound_game_over:
     
     # sleep for length of note
 	li $v0, 32                    # System call for sleep
-	li $a0, 250                   # Sleep for 500ms
+	li $a0, 250                   
 	syscall
     
     li $v0, 31
@@ -1192,6 +1192,86 @@ sound_game_over:
     li $a2, 80                    # Instrument
     li $a3, 100                   # Volume
     syscall
+    
+    j return_to_main
+    
+
+# Arguments: none
+# Return: none
+sound_victory:
+    # play victory jingle
+    li $v0, 31
+    li $a0, 60                   # Pitch
+    li $a1, 250                  # Duration
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+    li $v0, 32                   # System call for sleep
+    li $a0, 250                  
+    syscall
+    
+    li $v0, 31
+    li $a0, 64                   # Pitch
+    li $a1, 250                  # Duration
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+    li $v0, 32                   # System call for sleep
+    li $a0, 250                  
+    syscall
+    
+    li $v0, 31
+    li $a0, 67                   # Pitch
+    li $a1, 250                  # Duration 
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+    li $v0, 32                   # System call for sleep
+    li $a0, 250                  
+    syscall
+    
+    li $v0, 31
+    li $a0, 69                   # Pitch
+    li $a1, 250                  # Duration
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+    li $v0, 32                   # System call for sleep
+    li $a0, 250                  
+    syscall
+
+    li $v0, 31
+    li $a0, 48                   # Pitch
+    li $a1, 500                  # Duration
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+    li $v0, 32                   # System call for sleep
+    li $a0, 500                  
+    syscall
+
+    li $v0, 31
+    li $a0, 55                   # Pitch (Bass Note)
+    li $a1, 500                  # Duration
+    li $a2, 80                   # Instrument
+    li $a3, 100                  # Volume
+    syscall
+    
+    # sleep for length of note
+    li $v0, 32                   # System call for sleep
+    li $a0, 500                  # Sleep for 500 ms
+    syscall
+
     
     j return_to_main
 
