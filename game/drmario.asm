@@ -7,6 +7,13 @@
 # We assert that the code submitted here is entirely our own 
 # creation, and will indicate otherwise when it is not.
 #
+# How to run:
+# - Make sure this file is in the same directory as all the other files
+#   that were in the compressed folder.
+# - PLEASE make sure you are using the latest version of Saturn (V 0.1.10).
+# - Make sure the settings in the bitmap section of the terminal match the ones below.
+# - Click the Run button in the top right and click the bitmap display in the
+#   terminal for it to recieve keyboard events.
 ######################## Bitmap Display Configuration ########################
 # - Unit width in pixels:       1
 # - Unit height in pixels:      1
