@@ -1,5 +1,5 @@
-################# CSC258 Assembly Final Project ###################
-# This file, as well as the files included, contains our implementation of Dr Mario.
+################# [REDACTED] Assembly Final Project ###################
+# This file, as well as the files included, contains our implementation of a certain game.
 #
 # Student 1: Tyler Steptoe, 1009197441
 # Student 2: Katarina Vucic, 1008269400
